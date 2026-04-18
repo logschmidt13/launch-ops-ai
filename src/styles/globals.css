@@ -1,0 +1,70 @@
+/* ── CSS Variables ─────────────────────────────────────── */
+:root {
+  --black:  #050810;
+  --white:  #F0F2F8;
+  --orange: #FF4D00;
+  --green:  #00C97A;
+  --yellow: #FFB300;
+  --red:    #FF2D2D;
+  --grey:   #8A8FA8;
+  --border: #1C2240;
+  --card:   #0C1020;
+
+  --font-header: 'Bebas Neue', sans-serif;
+  --font-mono:   'Space Mono', monospace;
+  --font-body:   'DM Sans', sans-serif;
+
+  --topbar-h: 64px;
+}
+
+/* ── Reset ──────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--grey); }
+
+/* ── App Layout ─────────────────────────────────────────── */
+.app {
+  display: grid;
+  grid-template-rows: var(--topbar-h) 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main-content {
+  display: grid;
+  grid-template-columns: 288px 1fr 320px;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Utility ────────────────────────────────────────────── */
+code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: rgba(255,255,255,0.06);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--orange);
+}
