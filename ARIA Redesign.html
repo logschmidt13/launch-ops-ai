@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARIA — Autonomous Range Intelligence Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+/* ───────── Tokens ───────── */
+:root {
+  --black:  #050810;
+  --bg:     #070b18;
+  --white:  #F0F2F8;
+  --accent: #FF4D00;
+  --green:  #00C97A;
+  --yellow: #FFB300;
+  --red:    #FF2D2D;
+  --grey:   #8A8FA8;
+  --border: #1C2240;
+  --card:   #0C1020;
+  --card-2: #0F1528;
+
+  --font-h:    'Bebas Neue', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --font-body: 'DM Sans', sans-serif;
+
+  --bar-h: 36px;
+  --topbar-h: 68px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body, #root { height: 100%; overflow: hidden; }
+#root { overflow: auto; }
+.app { min-width: 1280px; }
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--grey); }
+code { font-family: var(--font-mono); font-size: 11px; background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; color: var(--accent); }
+kbd { font-family: var(--font-mono); font-size: 10px; padding: 2px 5px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); border-radius: 3px; color: var(--grey); }
+button { font: inherit; cursor: pointer; }
+
+/* Grain + grid bg */
+body::after {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 9999; opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* ───────── App layout ───────── */
+.app { display: grid; grid-template-rows: auto var(--topbar-h) 1fr auto; height: 100vh; background: var(--black); }
+.app--bar-off { grid-template-rows: var(--topbar-h) 1fr auto; }
+.main { display: grid; overflow: hidden; border-top: 1px solid var(--border); min-height: 0; }
+
+/* Layouts per variant */
+.main--v1 { grid-template-columns: 300px 1fr 360px; }
+.main--v2 { grid-template-columns: 280px 1fr; }
+.main--v3 { grid-template-columns: 280px 1fr 300px; }
+
+/* Panel head shared */
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; padding: 14px 18px 10px; border-bottom: 1px solid var(--border); }
+.panel-title { font-family: var(--font-h); font-size: 18px; letter-spacing: 0.12em; color: var(--white); }
+.panel-sub { font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.12em; }
+
+/* ───────── TopBar ───────── */
+.topbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 20px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, var(--bg) 0%, var(--black) 100%); position: relative; }
+.topbar__left { display: flex; align-items: baseline; gap: 14px; }
+.wordmark { font-family: var(--font-h); font-size: 30px; letter-spacing: 0.12em; color: var(--accent); text-shadow: 0 0 20px rgba(255,77,0,0.5); }
+.mission { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.2em; color: var(--grey); }
+.topbar__center { display: flex; align-items: center; gap: 16px; }
+.countdown { font-family: var(--font-h); font-size: 36px; letter-spacing: 0.08em; color: var(--white); font-variant-numeric: tabular-nums; line-height: 1; padding: 4px 18px; border: 1px solid var(--border); border-radius: 4px; background: rgba(0,0,0,0.3); }
+.countdown--hold { color: var(--yellow); border-color: rgba(255,179,0,0.4); }
+.countdown--launch { color: var(--accent); border-color: var(--accent); animation: launch-pulse 0.8s ease-in-out infinite; }
+@keyframes launch-pulse { 0%,100% { box-shadow: 0 0 20px rgba(255,77,0,0.3); } 50% { box-shadow: 0 0 40px rgba(255,77,0,0.7); } }
+.countdown-ctrls { display: flex; gap: 6px; }
+.btn { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; padding: 6px 12px; border: 1px solid var(--border); background: transparent; color: var(--white); border-radius: 3px; transition: all 0.15s; }
+.btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn--hold { border-color: rgba(255,179,0,0.4); color: var(--yellow); }
+.btn--hold:hover:not(:disabled) { background: var(--yellow); color: #000; border-color: var(--yellow); }
+.btn--resume { border-color: rgba(0,201,122,0.4); color: var(--green); }
+.btn--resume:hover:not(:disabled) { background: var(--green); color: #000; border-color: var(--green); }
+.btn--ghost { color: var(--grey); }
+.topbar__right { display: flex; align-items: center; gap: 14px; justify-content: flex-end; }
+.speed-ctl { display: flex; flex-direction: column; gap: 3px; }
+.speed-ctl__label { font-family: var(--font-mono); font-size: 8px; color: var(--grey); letter-spacing: 0.15em; }
+.speed-ctl__btns { display: flex; gap: 3px; }
+.speed-btn { font-family: var(--font-mono); font-size: 9px; padding: 3px 7px; border: 1px solid var(--border); background: transparent; color: var(--grey); border-radius: 2px; }
+.speed-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+.live-clock { font-family: var(--font-mono); font-size: 11px; color: var(--grey); font-variant-numeric: tabular-nums; }
+.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 1px solid; border-radius: 3px; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.15em; font-weight: 700; }
+.status-badge .status-dot { width: 7px; height: 7px; border-radius: 50%; }
+.status--nominal { color: var(--green); border-color: rgba(0,201,122,0.4); }
+.status--nominal .status-dot { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.status--hold { color: var(--yellow); border-color: rgba(255,179,0,0.4); }
+.status--hold .status-dot { background: var(--yellow); }
+.status--launch { color: var(--accent); border-color: var(--accent); }
+.status--launch .status-dot { background: var(--accent); }
+.hold-banner { position: absolute; left: 0; right: 0; bottom: -24px; background: rgba(255,179,0,0.15); color: var(--yellow); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; padding: 4px; text-align: center; border-top: 1px solid rgba(255,179,0,0.3); z-index: 20; }
+
+/* ───────── Subsystem Grid ───────── */
+.sys-grid { display: flex; flex-direction: column; background: var(--bg); border-right: 1px solid var(--border); overflow: hidden; }
+.sys-grid__list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.sub-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.sub-card:hover { border-color: rgba(255,77,0,0.4); background: var(--card-2); }
+.sub-card--warning { border-color: rgba(255,179,0,0.5); animation: warn-breathe 2s ease-in-out infinite; }
+.sub-card--critical { border-color: rgba(255,45,45,0.6); }
+@keyframes warn-breathe { 0%,100% { box-shadow: 0 0 0 rgba(255,179,0,0); } 50% { box-shadow: 0 0 12px rgba(255,179,0,0.25); } }
+.sub-card__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.sub-card__title-row { display: flex; align-items: center; gap: 8px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; }
+.sub-card__label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: var(--white); }
+.sub-card__status { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.1em; font-weight: 700; }
+.sub-card__primary { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
+.sub-card__primary-val { font-family: var(--font-h); font-size: 22px; letter-spacing: 0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.sub-card__primary-unit { font-family: var(--font-mono); font-size: 10px; color: var(--grey); margin-left: 3px; letter-spacing: 0; }
+.sub-card__metrics { border-top: 1px dashed var(--border); padding-top: 6px; display: flex; flex-direction: column; gap: 3px; }
+.mrow { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; }
+.mrow__label { color: var(--grey); letter-spacing: 0.05em; }
+.mrow__val { color: var(--white); font-variant-numeric: tabular-nums; }
+
+/* ───────── Approval Queue ───────── */
+.approval { display: flex; flex-direction: column; background: var(--bg); overflow: hidden; }
+.approval__progress { position: relative; height: 4px; margin: 14px 18px; background: var(--border); border-radius: 2px; }
+.approval__progress-fill { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, var(--accent), var(--yellow)); border-radius: 2px; transition: width 0.4s ease; }
+.approval__tick { position: absolute; top: -3px; width: 2px; height: 10px; background: var(--grey); opacity: 0.35; transform: translateX(-1px); }
+.tick--done { background: var(--accent); opacity: 1; }
+.tick--active { background: var(--white); opacity: 1; box-shadow: 0 0 8px var(--white); }
+.approval__card { margin: 10px 18px 14px; padding: 18px; border: 1px solid var(--accent); background: linear-gradient(180deg, rgba(255,77,0,0.09), rgba(255,77,0,0.02)); border-radius: 4px; }
+.approval__card--critical { border-color: var(--red); background: linear-gradient(180deg, rgba(255,45,45,0.1), rgba(255,45,45,0.02)); animation: critical-pulse 1.3s ease-in-out infinite; }
+@keyframes critical-pulse { 0%,100% { box-shadow: 0 0 0 rgba(255,45,45,0); } 50% { box-shadow: 0 0 24px rgba(255,45,45,0.35); } }
+.approval__card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.approval__step-num { font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.15em; }
+.approval__sys-badge { font-family: var(--font-mono); font-size: 9px; padding: 3px 7px; border: 1px solid; border-radius: 2px; letter-spacing: 0.1em; }
+.approval__action { font-family: var(--font-h); font-size: 22px; letter-spacing: 0.06em; margin-bottom: 8px; line-height: 1.1; }
+.approval__prompt { font-size: 12px; color: var(--grey); line-height: 1.55; margin-bottom: 12px; }
+.approval__warn { font-family: var(--font-mono); font-size: 10px; color: var(--red); letter-spacing: 0.1em; padding: 6px 8px; border: 1px solid rgba(255,45,45,0.4); background: rgba(255,45,45,0.08); border-radius: 3px; margin-bottom: 12px; }
+.approval__btns { display: flex; gap: 8px; }
+.btn--approve { flex: 1; padding: 10px; border-color: var(--green); color: var(--green); font-size: 11px; letter-spacing: 0.15em; }
+.btn--approve:hover:not(:disabled) { background: var(--green); color: #000; }
+.btn--hold-big { padding: 10px 14px; border-color: var(--yellow); color: var(--yellow); font-size: 11px; }
+.btn--hold-big:hover { background: var(--yellow); color: #000; }
+.approval__idle, .approval__done { padding: 30px 18px; text-align: center; }
+.approval__idle-icon, .approval__done-icon { font-size: 34px; color: var(--grey); margin-bottom: 10px; }
+.approval__done-icon { color: var(--accent); text-shadow: 0 0 20px var(--accent); animation: launch-pulse 0.6s infinite; }
+.approval__idle-title, .approval__done-title { font-family: var(--font-h); font-size: 20px; letter-spacing: 0.12em; margin-bottom: 4px; }
+.approval__done-title { color: var(--accent); }
+.approval__idle-sub, .approval__done-sub { font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.15em; }
+.approval__log { flex: 1; overflow-y: auto; padding: 0 18px 18px; border-top: 1px solid var(--border); }
+.approval__log-head { font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.15em; padding: 12px 0 8px; position: sticky; top: 0; background: var(--bg); }
+.approval__log-item { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px; padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 11px; }
+.approval__log-check { color: var(--green); font-weight: 700; }
+.approval__log-action { color: var(--white); font-weight: 500; }
+.approval__log-confirm { color: var(--grey); font-size: 10px; margin-top: 2px; line-height: 1.4; }
+.approval__log-time { font-family: var(--font-mono); font-size: 9px; color: var(--grey); }
+
+/* ───────── ARIA v1 (sidebar) ───────── */
+.aria-v1 { display: flex; flex-direction: column; background: linear-gradient(180deg, var(--bg), var(--black)); border-left: 1px solid var(--border); overflow: hidden; }
+.aria-v1__head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.aria-v1__title-row { display: flex; align-items: baseline; gap: 8px; }
+.aria-v1__pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); animation: v1-pulse 2s ease-in-out infinite; align-self: center; }
+@keyframes v1-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; box-shadow: 0 0 14px var(--green); } }
+.aria-v1__title { font-family: var(--font-h); font-size: 20px; letter-spacing: 0.12em; }
+.aria-v1__subtitle { font-family: var(--font-mono); font-size: 8px; color: var(--grey); letter-spacing: 0.08em; }
+.aria-v1__badge { font-family: var(--font-mono); font-size: 9px; color: var(--green); letter-spacing: 0.15em; border: 1px solid rgba(0,201,122,0.4); padding: 2px 7px; border-radius: 10px; }
+.aria-v1__stream { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.msg { border-radius: 4px; padding: 10px 12px; border-left: 3px solid; font-size: 12px; line-height: 1.55; background: var(--card); }
+.msg--info    { border-color: var(--accent); }
+.msg--system  { border-color: var(--grey); }
+.msg--warn    { border-color: var(--yellow); background: linear-gradient(90deg, rgba(255,179,0,0.06), transparent); }
+.msg--ok      { border-color: var(--green); background: linear-gradient(90deg, rgba(0,201,122,0.06), transparent); }
+.msg--launch  { border-color: var(--accent); background: linear-gradient(90deg, rgba(255,77,0,0.12), transparent); color: var(--accent); font-weight: 600; }
+.msg--user    { border-color: var(--grey); background: rgba(255,255,255,0.03); }
+.msg--resp    { border-color: var(--accent); }
+.msg__head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.msg__tag { font-family: var(--font-mono); font-size: 8px; font-weight: 700; letter-spacing: 0.12em; color: var(--accent); }
+.msg--user .msg__tag { color: var(--grey); }
+.msg__time { font-family: var(--font-mono); font-size: 8px; color: var(--grey); margin-left: auto; }
+.msg__pill { font-family: var(--font-mono); font-size: 7px; color: var(--yellow); border: 1px solid rgba(255,179,0,0.5); padding: 1px 5px; border-radius: 2px; letter-spacing: 0.1em; }
+.msg__text { white-space: pre-wrap; }
+.msg__reason { margin-top: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--grey); }
+.msg__reason summary { cursor: pointer; letter-spacing: 0.1em; padding: 2px 0; }
+.msg__reason div { padding: 6px 8px; margin-top: 4px; background: rgba(255,255,255,0.03); border-radius: 2px; line-height: 1.5; }
+.aria-v1__input { padding: 12px 16px; border-top: 1px solid var(--border); }
+.aria-v1__hint { font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.05em; margin-bottom: 6px; }
+.aria-v1__row { display: flex; gap: 6px; }
+.aria-v1__field { flex: 1; background: var(--black); border: 1px solid var(--border); color: var(--white); padding: 9px 12px; font-family: var(--font-mono); font-size: 12px; border-radius: 3px; outline: none; }
+.aria-v1__field:focus { border-color: var(--accent); }
+.aria-v1__send { padding: 0 14px; background: var(--accent); border: none; color: #000; font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; border-radius: 3px; }
+.aria-v1__send:hover { filter: brightness(1.1); }
+
+/* ───────── ARIA v2 (cinematic) ───────── */
+.aria-v2 { display: grid; grid-template-rows: auto auto 1fr auto auto; background: radial-gradient(ellipse 70% 50% at 50% 30%, rgba(255,77,0,0.06) 0%, transparent 70%), var(--black); overflow: hidden; position: relative; border-left: 1px solid var(--border); }
+.aria-v2::before { content: ''; position: absolute; inset: 0; pointer-events: none; background-image: linear-gradient(rgba(255,77,0,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,77,0,0.025) 1px, transparent 1px); background-size: 48px 48px; }
+.aria-v2 > * { position: relative; z-index: 1; }
+
+.aria-v2__stage { display: grid; grid-template-columns: 1fr 240px; gap: 28px; align-items: center; padding: 30px 40px 10px; }
+.aria-v2__orb-wrap { position: relative; width: min(320px, 40vh); aspect-ratio: 1; margin: 0 auto; }
+.orbit { position: absolute; inset: 0; animation: orbit-spin 18s linear infinite; }
+@keyframes orbit-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.orbit__sweep { animation: orbit-dash 3.5s linear infinite; }
+@keyframes orbit-dash { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -540; } }
+.aria-v2__orb-core { position: absolute; inset: 20%; border-radius: 50%; background: radial-gradient(circle, var(--card-2) 0%, var(--black) 75%); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; box-shadow: inset 0 0 40px rgba(255,77,0,0.15), 0 0 60px rgba(255,77,0,0.15); }
+.aria-v2__orb-label { font-family: var(--font-h); font-size: 32px; letter-spacing: 0.15em; color: var(--white); }
+.aria-v2__orb-sub { font-family: var(--font-mono); font-size: 9px; color: var(--aria-accent, var(--accent)); letter-spacing: 0.25em; }
+
+.wav { display: flex; align-items: center; justify-content: center; gap: 2px; width: 70%; height: 28px; }
+.wav__bar { display: block; width: 2px; background: var(--aria-accent, var(--accent)); border-radius: 1px; height: 30%; opacity: 0.5; transition: height 0.1s; }
+.wav--idle .wav__bar { animation: wav-idle 2.4s ease-in-out infinite; animation-delay: var(--d); }
+.wav--speak .wav__bar { animation: wav-speak 0.5s ease-in-out infinite; animation-delay: var(--d); }
+@keyframes wav-idle { 0%,100% { height: 15%; opacity: 0.25; } 50% { height: 30%; opacity: 0.5; } }
+@keyframes wav-speak { 0%,100% { height: 30%; opacity: 0.6; } 50% { height: 90%; opacity: 1; } }
+
+.aria-v2__meta { display: flex; flex-direction: column; gap: 8px; padding: 14px 18px; border: 1px solid var(--border); border-radius: 4px; background: rgba(12,16,32,0.6); backdrop-filter: blur(8px); }
+.aria-v2__meta-row { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10px; }
+.aria-v2__meta-k { color: var(--grey); letter-spacing: 0.15em; }
+.aria-v2__meta-v { color: var(--white); letter-spacing: 0.08em; font-weight: 700; }
+
+.aria-v2__utterance { margin: 10px 40px; padding: 20px 24px; border: 1px solid var(--border); border-left: 3px solid var(--aria-accent, var(--accent)); border-radius: 4px; background: linear-gradient(90deg, rgba(255,77,0,0.05), transparent); }
+.aria-v2__utterance--warn { border-left-color: var(--yellow); background: linear-gradient(90deg, rgba(255,179,0,0.06), transparent); }
+.aria-v2__utterance--launch { border-left-color: var(--accent); background: linear-gradient(90deg, rgba(255,77,0,0.15), transparent); }
+.aria-v2__utterance--ok { border-left-color: var(--green); background: linear-gradient(90deg, rgba(0,201,122,0.05), transparent); }
+.aria-v2__utt-head { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.aria-v2__utt-tag { font-family: var(--font-mono); font-size: 9px; color: var(--aria-accent, var(--accent)); letter-spacing: 0.15em; }
+.aria-v2__utt-time { font-family: var(--font-mono); font-size: 9px; color: var(--grey); }
+.aria-v2__utt-text { font-size: 15px; line-height: 1.55; color: var(--white); text-wrap: pretty; }
+.aria-v2__utt-reason { margin-top: 12px; padding: 10px 12px; background: rgba(255,255,255,0.03); border-radius: 3px; font-family: var(--font-mono); font-size: 11px; color: var(--grey); line-height: 1.55; }
+.aria-v2__utt-reason-tag { color: var(--yellow); letter-spacing: 0.15em; font-size: 9px; display: block; margin-bottom: 4px; }
+.aria-v2__reason-toggle { margin-top: 8px; background: transparent; border: none; color: var(--grey); font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.15em; padding: 0; }
+.aria-v2__reason-toggle:hover { color: var(--accent); }
+
+.aria-v2__history { flex: 1; overflow-y: auto; padding: 4px 40px 8px; min-height: 0; }
+.aria-v2__history-head { font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.2em; padding: 8px 0; border-bottom: 1px dashed var(--border); margin-bottom: 6px; position: sticky; top: 0; background: var(--black); }
+.aria-v2__history-empty { font-family: var(--font-mono); font-size: 10px; color: var(--grey); padding: 8px 0; opacity: 0.5; }
+.aria-v2__hist-item { display: grid; grid-template-columns: 56px 50px 1fr; gap: 10px; padding: 5px 0; font-size: 11px; border-bottom: 1px dashed rgba(28,34,64,0.5); }
+.aria-v2__hist-time { font-family: var(--font-mono); font-size: 9px; color: var(--grey); }
+.aria-v2__hist-tag { font-family: var(--font-mono); font-size: 9px; color: var(--accent); letter-spacing: 0.1em; }
+.aria-v2__hist-item--user .aria-v2__hist-tag { color: var(--grey); }
+.aria-v2__hist-item--warning .aria-v2__hist-tag { color: var(--yellow); }
+.aria-v2__hist-item--success .aria-v2__hist-tag { color: var(--green); }
+.aria-v2__hist-item--launch .aria-v2__hist-tag { color: var(--accent); font-weight: 700; }
+.aria-v2__hist-text { color: var(--grey); line-height: 1.5; }
+
+.aria-v2__chips { display: flex; gap: 8px; padding: 6px 40px; flex-wrap: wrap; }
+.chip { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; padding: 6px 12px; border: 1px solid var(--border); background: var(--card); color: var(--grey); border-radius: 14px; }
+.chip:hover { border-color: var(--accent); color: var(--accent); background: rgba(255,77,0,0.08); }
+
+.aria-v2__input { display: flex; gap: 8px; padding: 12px 40px 24px; }
+.aria-v2__field { flex: 1; background: var(--card); border: 1px solid var(--border); color: var(--white); padding: 14px 18px; font-family: var(--font-mono); font-size: 13px; border-radius: 4px; outline: none; }
+.aria-v2__field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,77,0,0.1); }
+.aria-v2__send { padding: 0 22px; background: var(--accent); border: none; color: #000; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.15em; border-radius: 4px; }
+
+/* ───────── ARIA v3 (ambient + overlay) ───────── */
+.aria-v3__dock { display: flex; flex-direction: column; background: var(--bg); border-left: 1px solid var(--border); overflow: hidden; }
+.aria-v3__dock-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; text-align: center; }
+.aria-v3__glyph { display: flex; gap: 10px; }
+.aria-v3__glyph-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); animation: glyph-blink 2.4s ease-in-out infinite; }
+.aria-v3__glyph-dot:nth-child(2) { animation-delay: 0.3s; }
+.aria-v3__glyph-dot:nth-child(3) { animation-delay: 0.6s; }
+.aria-v3__glyph--warn .aria-v3__glyph-dot { background: var(--yellow); box-shadow: 0 0 12px var(--yellow); }
+@keyframes glyph-blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+.aria-v3__status { font-family: var(--font-h); font-size: 22px; letter-spacing: 0.14em; color: var(--white); }
+.aria-v3__lastwords { font-family: var(--font-mono); font-size: 11px; color: var(--grey); line-height: 1.6; max-width: 240px; font-style: italic; }
+.aria-v3__summon { margin: 16px; padding: 14px 18px; background: var(--card); border: 1px solid var(--accent); color: var(--accent); font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.15em; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+.aria-v3__summon:hover { background: var(--accent); color: #000; }
+.aria-v3__summon kbd { border-color: currentColor; color: inherit; background: rgba(0,0,0,0.2); }
+.aria-v3__hint { font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.12em; text-align: center; padding: 0 16px 18px; opacity: 0.55; }
+
+.aria-v3__backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); z-index: 200; display: flex; align-items: flex-start; justify-content: center; padding-top: 10vh; animation: v3-fade 0.15s ease-out; }
+@keyframes v3-fade { from { opacity: 0; } to { opacity: 1; } }
+.aria-v3__modal { width: min(640px, 90vw); background: var(--card); border: 1px solid var(--accent); border-radius: 6px; box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 80px rgba(255,77,0,0.15); display: flex; flex-direction: column; max-height: 76vh; overflow: hidden; animation: v3-rise 0.2s ease-out; }
+@keyframes v3-rise { from { transform: translateY(-12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.aria-v3__modal-head { display: flex; align-items: baseline; gap: 10px; padding: 12px 18px; border-bottom: 1px solid var(--border); }
+.aria-v3__modal-tag { font-family: var(--font-h); font-size: 18px; letter-spacing: 0.12em; color: var(--accent); }
+.aria-v3__modal-sub { font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.1em; flex: 1; }
+.aria-v3__modal-esc { font-family: var(--font-mono); font-size: 9px; color: var(--grey); }
+.aria-v3__list { flex: 1; overflow-y: auto; padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+.v3-msg { display: grid; grid-template-columns: 50px 1fr 60px; gap: 10px; padding: 8px; border-radius: 3px; font-size: 12px; }
+.v3-msg__tag { font-family: var(--font-mono); font-size: 9px; color: var(--accent); letter-spacing: 0.12em; padding-top: 1px; }
+.v3-msg--user .v3-msg__tag { color: var(--grey); }
+.v3-msg--warning .v3-msg__tag { color: var(--yellow); }
+.v3-msg--success .v3-msg__tag { color: var(--green); }
+.v3-msg--launch { background: rgba(255,77,0,0.08); }
+.v3-msg__text { line-height: 1.55; }
+.v3-msg__reason { margin-top: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--grey); }
+.v3-msg__reason span { color: var(--yellow); letter-spacing: 0.1em; margin-right: 6px; }
+.v3-msg__time { font-family: var(--font-mono); font-size: 9px; color: var(--grey); text-align: right; }
+.aria-v3__chips { display: flex; gap: 6px; padding: 8px 18px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.aria-v3__input { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--border); }
+.aria-v3__caret { font-family: var(--font-mono); color: var(--accent); font-size: 14px; }
+.aria-v3__field { flex: 1; background: transparent; border: none; color: var(--white); font-family: var(--font-mono); font-size: 14px; outline: none; }
+.aria-v3__kbd { align-self: center; }
+
+/* ───────── ARIA Bar (ambient strip) ───────── */
+.aria-bar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 0 18px; height: var(--bar-h); background: linear-gradient(90deg, rgba(255,77,0,0.08), var(--bg) 40%, var(--bg) 60%, rgba(255,77,0,0.05)); border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; overflow: hidden; }
+.aria-bar:hover { background: linear-gradient(90deg, rgba(255,77,0,0.14), var(--bg) 40%, var(--bg) 60%, rgba(255,77,0,0.1)); }
+.aria-bar--warn { background: linear-gradient(90deg, rgba(255,179,0,0.12), var(--bg) 40%, var(--bg) 60%, rgba(255,179,0,0.08)); border-bottom-color: rgba(255,179,0,0.3); }
+.aria-bar--launch { background: linear-gradient(90deg, rgba(255,77,0,0.25), rgba(255,77,0,0.1) 40%, rgba(255,77,0,0.1) 60%, rgba(255,77,0,0.25)); border-bottom-color: var(--accent); }
+.aria-bar--ok { background: linear-gradient(90deg, rgba(0,201,122,0.12), var(--bg) 40%, var(--bg) 60%, rgba(0,201,122,0.08)); }
+.aria-bar__left { display: flex; align-items: center; gap: 8px; }
+.aria-bar__pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: v1-pulse 1.8s ease-in-out infinite; }
+.aria-bar--warn .aria-bar__pulse { background: var(--yellow); box-shadow: 0 0 10px var(--yellow); }
+.aria-bar--launch .aria-bar__pulse { background: var(--accent); }
+.aria-bar--ok .aria-bar__pulse { background: var(--green); box-shadow: 0 0 10px var(--green); }
+.aria-bar__tag { font-family: var(--font-h); font-size: 16px; letter-spacing: 0.14em; color: var(--accent); }
+.aria-bar--warn .aria-bar__tag { color: var(--yellow); }
+.aria-bar--ok .aria-bar__tag { color: var(--green); }
+.aria-bar__sep { color: var(--grey); opacity: 0.5; }
+.aria-bar__state { font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.15em; }
+.aria-bar__text { font-family: var(--font-mono); font-size: 11px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.85; }
+.aria-bar__right { display: flex; align-items: center; gap: 8px; }
+.aria-bar__time { font-family: var(--font-mono); font-size: 9px; color: var(--grey); }
+.aria-bar__kbd { font-family: var(--font-mono); font-size: 9px; }
+
+/* ───────── Tweaks panel ───────── */
+.tweaks { position: fixed; bottom: 16px; right: 16px; width: 280px; background: rgba(7,11,24,0.95); backdrop-filter: blur(10px); border: 1px solid var(--accent); border-radius: 6px; padding: 14px; z-index: 300; font-family: var(--font-mono); font-size: 11px; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+.tweaks__head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+.tweaks__title { font-family: var(--font-h); font-size: 16px; letter-spacing: 0.14em; color: var(--accent); }
+.tweaks__close { background: transparent; border: none; color: var(--grey); font-size: 16px; padding: 0 6px; }
+.tweaks__group { margin-bottom: 12px; }
+.tweaks__label { font-size: 9px; color: var(--grey); letter-spacing: 0.15em; margin-bottom: 6px; }
+.tweaks__btns { display: flex; gap: 4px; flex-wrap: wrap; }
+.tweaks__btn { flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid var(--border); background: transparent; color: var(--grey); font-family: var(--font-mono); font-size: 10px; border-radius: 3px; letter-spacing: 0.05em; }
+.tweaks__btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+.tweaks__swatches { display: flex; gap: 6px; }
+.tweaks__swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+.tweaks__swatch.active { border-color: var(--white); }
+.tweaks__toggle { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; cursor: pointer; }
+.tweaks__switch { width: 32px; height: 18px; border-radius: 9px; background: var(--border); position: relative; transition: background 0.2s; }
+.tweaks__switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--grey); transition: all 0.2s; }
+.tweaks__switch.on { background: var(--accent); }
+.tweaks__switch.on::after { left: 16px; background: #000; }
+.tweaks__toggle-label { font-size: 10px; color: var(--white); letter-spacing: 0.05em; }
+
+.tweaks-toggle { position: fixed; bottom: 16px; right: 16px; padding: 10px 14px; background: var(--accent); border: none; color: #000; font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.15em; border-radius: 4px; z-index: 290; box-shadow: 0 10px 30px rgba(255,77,0,0.4); }
+
+/* ───────── Landing + Role Picker ───────── */
+.landing, .role-picker { position: relative; display: flex; flex-direction: column; height: 100vh; background: var(--black); overflow: hidden; padding: 40px 60px 30px; }
+.landing__bg { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,77,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,77,0,0.04) 1px, transparent 1px); background-size: 48px 48px; pointer-events: none; mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 80%); }
+.landing__head { position: relative; z-index: 2; margin-bottom: 40px; }
+.landing__mark { display: flex; align-items: baseline; gap: 14px; margin-bottom: 32px; }
+.landing__wordmark { font-family: var(--font-h); font-size: 48px; letter-spacing: 0.14em; color: var(--accent); text-shadow: 0 0 30px rgba(255,77,0,0.4); }
+.landing__tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.22em; color: var(--grey); }
+.landing__prompt { font-family: var(--font-mono); font-size: 11px; color: var(--white); letter-spacing: 0.25em; }
+.landing__cards { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; flex: 1; max-height: 460px; }
+.mode-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 28px 26px; text-align: left; color: var(--white); display: flex; flex-direction: column; gap: 10px; cursor: pointer; transition: all 0.18s; position: relative; overflow: hidden; }
+.mode-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 40%, rgba(255,77,0,0) 100%); transition: background 0.2s; pointer-events: none; }
+.mode-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 40px rgba(255,77,0,0.1); }
+.mode-card:hover::before { background: linear-gradient(135deg, transparent 40%, rgba(255,77,0,0.08) 100%); }
+.mode-card__num { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.2em; color: var(--grey); }
+.mode-card__title { font-family: var(--font-h); font-size: 26px; letter-spacing: 0.1em; color: var(--white); line-height: 1.1; min-height: 2.4em; }
+.mode-card__tag { font-family: var(--font-mono); font-size: 9px; color: var(--accent); letter-spacing: 0.18em; margin-top: 2px; }
+.mode-card__desc { font-size: 12px; color: var(--grey); line-height: 1.6; flex: 1; margin-top: 8px; }
+.mode-card__cta { font-family: var(--font-mono); font-size: 11px; color: var(--accent); letter-spacing: 0.18em; font-weight: 700; margin-top: 14px; }
+.landing__foot, .landing__back { position: relative; z-index: 2; font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.2em; margin-top: 28px; text-align: center; }
+.landing__back { background: transparent; border: 1px solid var(--border); padding: 10px 18px; color: var(--grey); border-radius: 3px; margin: 28px auto 0; width: fit-content; display: block; cursor: pointer; }
+.landing__back:hover { border-color: var(--accent); color: var(--accent); }
+
+.role-picker__sub { font-family: var(--font-mono); font-size: 10px; color: var(--grey); letter-spacing: 0.1em; margin-top: 10px; max-width: 560px; line-height: 1.6; }
+.role-grid { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; flex: 1; max-height: 440px; }
+.role-card { background: var(--card); border: 1px solid var(--border); border-radius: 4px; padding: 18px; text-align: left; cursor: pointer; color: var(--white); transition: all 0.15s; display: flex; flex-direction: column; gap: 6px; }
+.role-card:hover { border-color: var(--role-color, var(--accent)); transform: translateY(-2px); box-shadow: 0 0 20px color-mix(in srgb, var(--role-color, var(--accent)) 20%, transparent); }
+.role-card__head { display: flex; justify-content: space-between; align-items: baseline; }
+.role-card__callsign { font-family: var(--font-h); font-size: 20px; letter-spacing: 0.12em; }
+.role-card__badge { font-family: var(--font-mono); font-size: 8px; color: var(--accent); border: 1px solid var(--accent); padding: 2px 6px; border-radius: 2px; letter-spacing: 0.15em; }
+.role-card__label { font-size: 13px; color: var(--white); font-weight: 500; }
+.role-card__systems { font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.08em; text-transform: uppercase; }
+.role-card__desc { font-size: 11px; color: var(--grey); line-height: 1.5; margin-top: 6px; }
+
+/* ───────── Radio + Checklist panel ───────── */
+.rc-body { flex: 1; overflow-y: auto; padding: 0 18px 18px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 14px; }
+.rc-block { display: flex; flex-direction: column; }
+.rc-block__head { font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.2em; padding: 12px 0 8px; position: sticky; top: 0; background: var(--bg); z-index: 2; }
+.rc-phase { margin-bottom: 4px; }
+.rc-phase__label { font-family: var(--font-mono); font-size: 9px; color: var(--accent); letter-spacing: 0.2em; padding: 8px 0 4px; opacity: 0.7; }
+.rc-row { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px; padding: 7px 8px; border-bottom: 1px dashed var(--border); align-items: center; font-size: 11px; }
+.rc-row--done { opacity: 0.45; }
+.rc-row--armed { background: rgba(255,179,0,0.05); }
+.rc-row--own { background: rgba(255,255,255,0.02); }
+.rc-check { font-family: var(--font-mono); color: var(--grey); font-size: 12px; }
+.rc-check--done { color: var(--green); }
+.rc-row__name { font-size: 11px; color: var(--white); line-height: 1.4; }
+.rc-row__meta { display: flex; gap: 8px; margin-top: 2px; font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.05em; }
+.rc-row__type { color: var(--grey); opacity: 0.5; text-transform: uppercase; }
+.rc-ack { background: transparent; border: 1px solid var(--yellow); color: var(--yellow); font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; padding: 4px 8px; border-radius: 2px; }
+.rc-ack:hover { background: var(--yellow); color: #000; }
+.rc-radio { display: grid; grid-template-columns: 80px 1fr auto; gap: 10px; padding: 6px 0; border-bottom: 1px dashed rgba(28,34,64,0.5); font-size: 11px; align-items: baseline; }
+.rc-radio__from { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.15em; font-weight: 700; }
+.rc-radio__text { color: var(--grey); line-height: 1.5; }
+.rc-radio__t { font-family: var(--font-mono); font-size: 9px; color: var(--grey); opacity: 0.6; }
+.rc-empty { font-family: var(--font-mono); font-size: 10px; color: var(--grey); padding: 8px 0; opacity: 0.4; }
+
+.sub-card--highlight { background: var(--card-2); }
+
+
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="aria/data.js" data-presets="env,react"></script>
+<script type="text/babel" src="aria/dataFsae.js" data-presets="env,react"></script>
+<script type="text/babel" src="aria/dataCopilot.js" data-presets="env,react"></script>
+<script type="text/babel" src="aria/hooks.js" data-presets="env,react"></script>
+<script type="text/babel" src="aria/modeHooks.js" data-presets="env,react"></script>
+<script type="text/babel" src="aria/shared.jsx" data-presets="env,react"></script>
+<script type="text/babel" src="aria/radioChecklist.jsx" data-presets="env,react"></script>
+<script type="text/babel" src="aria/landing.jsx" data-presets="env,react"></script>
+<script type="text/babel" src="aria/ariaV1.jsx" data-presets="env,react"></script>
+<script type="text/babel" src="aria/ariaV2.jsx" data-presets="env,react"></script>
+<script type="text/babel" src="aria/ariaV3.jsx" data-presets="env,react"></script>
+<script type="text/babel" src="aria/ariaBar.jsx" data-presets="env,react"></script>
+
+<script type="text/babel" data-presets="env,react">
+const { useState, useEffect, useCallback, useMemo } = React;
+
+// ── Tweakable defaults (persisted between reloads by host) ──
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "variation": "v1",
+  "showAriaBar": true,
+  "accent": "#B8A9FA",
+  "density": "comfortable",
+  "mode": "copilot",
+  "copilotRole": "PROP"
+}/*EDITMODE-END*/;
+
+// ── Mode-specific runtime config ──
+const MODES = {
+  autonomous: {
+    missionLabel: 'APEX-7 · AUTONOMOUS OPS',
+    countdown: 600,
+    systemConfig: () => window.SUBSYSTEM_CONFIG,
+    systemOrder:  () => window.SUBSYSTEM_ORDER,
+    systemColors: () => window.SYSTEM_COLORS,
+    timeline:     () => window.ARIA_TIMELINE,
+    panel: 'approval',
+  },
+  copilot: {
+    missionLabel: 'APEX-7 · CONSOLE COPILOT',
+    countdown: 600,
+    systemConfig: () => window.SUBSYSTEM_CONFIG,
+    systemOrder:  () => window.SUBSYSTEM_ORDER,
+    systemColors: () => window.SYSTEM_COLORS,
+    timeline:     () => window.COPILOT_ARIA_TIMELINE,
+    radio:        () => window.COPILOT_RADIO,
+    checklist:    () => window.CHECKLIST_ITEMS_COPILOT || [],
+    phases:       ['PRE-LAUNCH','TERMINAL COUNT','FINAL'],
+    panel: 'radiocheck',
+  },
+  fsae: {
+    missionLabel: 'AVENGER-4 · FSAE RACE ENGINEER',
+    countdown: 300,
+    systemConfig: () => window.FSAE_SUBSYSTEM_CONFIG,
+    systemOrder:  () => window.FSAE_SUBSYSTEM_ORDER,
+    systemColors: () => window.FSAE_SYSTEM_COLORS,
+    timeline:     () => window.FSAE_ARIA_TIMELINE,
+    radio:        () => window.FSAE_RADIO,
+    checklist:    () => window.FSAE_CHECKLIST_ITEMS,
+    phases:       ['PRE-GRID','FORMATION','RACE START'],
+    panel: 'radiocheck',
+  },
+};
+
+function Tweaks({ tweaks, setTweaks, open, onClose, onBackToLanding }) {
+  if (!open) return null;
+  const set = (k, v) => {
+    const next = { ...tweaks, [k]: v };
+    setTweaks(next);
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
+  };
+  return (
+    <div className="tweaks">
+      <div className="tweaks__head">
+        <span className="tweaks__title">TWEAKS</span>
+        <button className="tweaks__close" onClick={onClose}>×</button>
+      </div>
+
+      <div className="tweaks__group">
+        <div className="tweaks__label">MODE</div>
+        <div className="tweaks__btns">
+          {['copilot','fsae','autonomous'].map(m => (
+            <button key={m} className={`tweaks__btn ${tweaks.mode===m?'active':''}`} onClick={() => set('mode', m)}>
+              {m === 'copilot' ? 'COPILOT' : m === 'fsae' ? 'FSAE' : 'AUTO'}
+            </button>
+          ))}
+        </div>
+        <button className="tweaks__btn" style={{ width: '100%', marginTop: 6 }} onClick={onBackToLanding}>← LANDING</button>
+      </div>
+
+      {tweaks.mode === 'copilot' && (
+        <div className="tweaks__group">
+          <div className="tweaks__label">CONSOLE ROLE</div>
+          <div className="tweaks__btns" style={{ flexWrap: 'wrap' }}>
+            {window.COPILOT_ROLE_ORDER.map(r => (
+              <button key={r}
+                      className={`tweaks__btn ${tweaks.copilotRole===r?'active':''}`}
+                      style={{ flex: '1 0 30%' }}
+                      onClick={() => set('copilotRole', r)}>
+                {r}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="tweaks__group">
+        <div className="tweaks__label">ARIA VARIATION</div>
+        <div className="tweaks__btns">
+          {['v1','v2','v3'].map(v => (
+            <button key={v} className={`tweaks__btn ${tweaks.variation===v?'active':''}`} onClick={() => set('variation', v)}>
+              {v==='v1'?'SIDEBAR':v==='v2'?'CENTER':'AMBIENT'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="tweaks__group">
+        <div className="tweaks__toggle" onClick={() => set('showAriaBar', !tweaks.showAriaBar)}>
+          <span className="tweaks__toggle-label">ARIA BAR</span>
+          <span className={`tweaks__switch ${tweaks.showAriaBar?'on':''}`} />
+        </div>
+      </div>
+
+      <div className="tweaks__group">
+        <div className="tweaks__label">ACCENT</div>
+        <div className="tweaks__swatches">
+          {['#FF4D00','#FFB300','#00C97A','#7EC8E3','#B8A9FA'].map(c => (
+            <div key={c}
+                 className={`tweaks__swatch ${tweaks.accent===c?'active':''}`}
+                 style={{ background: c }}
+                 onClick={() => set('accent', c)} />
+          ))}
+        </div>
+      </div>
+
+      <div className="tweaks__group">
+        <div className="tweaks__label">DENSITY</div>
+        <div className="tweaks__btns">
+          {['compact','comfortable'].map(d => (
+            <button key={d} className={`tweaks__btn ${tweaks.density===d?'active':''}`} onClick={() => set('density', d)}>
+              {d.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Copilot uses the autonomous checklist from data/checklist.js — we mirror it here
+window.CHECKLIST_ITEMS_COPILOT = [
+  { id: 1,  phase: 'PRE-LAUNCH',     name: 'Propellant tanking complete',       role: 'PROP',     triggerAt: 592, type: 'auto'   },
+  { id: 2,  phase: 'PRE-LAUNCH',     name: 'Subsystem power-on verified',        role: 'AVIONICS', triggerAt: 570, type: 'auto'   },
+  { id: 3,  phase: 'PRE-LAUNCH',     name: 'Range safety brief complete',        role: 'RSO',      triggerAt: 540, type: 'auto'   },
+  { id: 4,  phase: 'PRE-LAUNCH',     name: 'Ground support equipment nominal',   role: 'GSE',      triggerAt: 510, type: 'auto'   },
+  { id: 5,  phase: 'PRE-LAUNCH',     name: 'Communication links established',    role: 'COMMS',    triggerAt: 480, type: 'auto'   },
+  { id: 6,  phase: 'PRE-LAUNCH',     name: 'Airspace clearance confirmed',       role: 'RSO',      triggerAt: 450, type: 'auto'   },
+  { id: 7,  phase: 'PRE-LAUNCH',     name: 'Avionics arm sequence initiated',    role: 'AVIONICS', triggerAt: 420, type: 'auto'   },
+  { id: 8,  phase: 'PRE-LAUNCH',     name: 'Propellant pressurization nominal',  role: 'PROP',     triggerAt: 360, type: 'manual' },
+  { id: 9,  phase: 'TERMINAL COUNT', name: 'Flight computer final check',        role: 'AVIONICS', triggerAt: 300, type: 'auto'   },
+  { id: 10, phase: 'TERMINAL COUNT', name: 'Umbilical disconnect ready',         role: 'GSE',      triggerAt: 270, type: 'auto'   },
+  { id: 11, phase: 'TERMINAL COUNT', name: 'Internal battery power transfer',    role: 'POWER',    triggerAt: 240, type: 'auto'   },
+  { id: 12, phase: 'TERMINAL COUNT', name: 'Destruct system armed',              role: 'RSO',      triggerAt: 210, type: 'auto'   },
+  { id: 13, phase: 'TERMINAL COUNT', name: 'Launch pad area cleared',            role: 'SAFETY',   triggerAt: 180, type: 'auto'   },
+  { id: 14, phase: 'TERMINAL COUNT', name: 'Final avionics verification',        role: 'AVIONICS', triggerAt: 150, type: 'manual' },
+  { id: 15, phase: 'TERMINAL COUNT', name: 'Igniter continuity check',           role: 'PROP',     triggerAt: 120, type: 'auto'   },
+  { id: 16, phase: 'FINAL',          name: 'Range safety clearance granted',     role: 'RSO',      triggerAt: 60,  type: 'auto'   },
+  { id: 17, phase: 'FINAL',          name: 'Launch commit poll — all GO',        role: 'ALL',      triggerAt: 45,  type: 'auto'   },
+  { id: 18, phase: 'FINAL',          name: 'Ignition sequence initiated',        role: 'PROP',     triggerAt: 30,  type: 'auto'   },
+  { id: 19, phase: 'FINAL',          name: 'Final go/no-go confirmation',        role: 'FD',       triggerAt: 15,  type: 'auto'   },
+  { id: 20, phase: 'FINAL',          name: 'Ignition armed — launch imminent',   role: 'PROP',     triggerAt: 10,  type: 'auto'   },
+];
+
+function Dashboard({ mode, tweaks, setTweaks, onExit }) {
+  const modeCfg = MODES[mode];
+  const [speed, setSpeed] = useState(1);
+  const [v3Open, setV3Open] = useState(false);
+  const [runKey, setRunKey] = useState(0);  // bump to restart
+
+  const countdown = window.useCountdown(modeCfg.countdown, speed);
+  const { remaining, isHolding, isComplete, hold, resume, reset } = countdown;
+
+  // Restart timers when mode changes
+  useEffect(() => {
+    reset();
+    setRunKey(k => k + 1);
+  }, [mode]);
+
+  // Telemetry — switch hook by mode
+  const telemetryAuto = window.useTelemetry(isHolding, remaining);
+  const telemetryFsae = window.useFsaeTelemetry(isHolding, remaining);
+  const telemetry = mode === 'fsae' ? telemetryFsae : telemetryAuto;
+
+  // ARIA channel — mode-specific timeline
+  const timeline = useMemo(() => modeCfg.timeline(), [mode]);
+  const { messages, push } = window.useAriaChannelFor(timeline, remaining, isHolding);
+
+  // Approval queue (autonomous only)
+  const approval = window.useApprovalQueue(remaining, push);
+
+  // Radio + checklist (copilot/fsae)
+  const radioTimeline = useMemo(() => modeCfg.radio ? modeCfg.radio() : [], [mode]);
+  const checklistItems = useMemo(() => modeCfg.checklist ? modeCfg.checklist() : [], [mode]);
+  const colorMap = useMemo(() => {
+    if (mode === 'fsae') {
+      return { POWERTRAIN: '#FF6B6B', AERO: '#7EC8E3', SUSPENSION: '#B8A9FA', DAQ: '#00C97A', DRIVER: '#FFB300', RACE_CONTROL: '#FF4D00', MECH: '#8A8FA8', FUELS: '#FFB300', SAFETY: '#FFB300', COMMS: '#B8A9FA', RC: '#FF4D00', RE: '#FF4D00' };
+    }
+    const c = { ...window.SYSTEM_COLORS };
+    Object.entries(window.COPILOT_ROLES || {}).forEach(([k, v]) => { c[k] = v.color; });
+    c.SAFETY = '#FFB300';
+    return c;
+  }, [mode]);
+
+  const radio = window.useRadio(radioTimeline, remaining, isHolding, colorMap);
+  const checklist = window.useChecklist(checklistItems, remaining, isHolding, push);
+
+  const role = mode === 'copilot' ? window.COPILOT_ROLES[tweaks.copilotRole] : null;
+  const roleFilter = role ? [...(role.checklistRoles || []), tweaks.copilotRole] : [];
+
+  // Apply accent globally
+  useEffect(() => {
+    document.documentElement.style.setProperty('--accent', tweaks.accent);
+  }, [tweaks.accent]);
+
+  const handleUserSend = useCallback((text) => {
+    push({ id: `u-${Date.now()}`, text, type: 'user' });
+    setTimeout(() => {
+      const reply = window.generateAriaReply(text, telemetry);
+      push({ id: `r-${Date.now()}`, text: reply, type: 'response' });
+    }, 420);
+  }, [push, telemetry]);
+
+  // Cmd-K for v3
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        if (tweaks.variation === 'v3') setV3Open(o => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [tweaks.variation]);
+
+  const variation = tweaks.variation || 'v2';
+  const showBar = !!tweaks.showAriaBar;
+  const compact = tweaks.density === 'compact';
+  const mainClass = `main main--${variation}`;
+  const usesApproval = modeCfg.panel === 'approval';
+
+  const RadioPanel = (
+    <window.RadioChecklistPanel
+      title={mode === 'fsae' ? 'PRE-GRID & RADIO' : 'CHECKLIST & RADIO'}
+      checklist={checklistItems}
+      radio={radio}
+      done={checklist.done}
+      onAck={checklist.ack}
+      phases={modeCfg.phases}
+      roleFilter={roleFilter}
+      roleColor={role?.color}
+      remaining={remaining}
+      isComplete={isComplete}
+    />
+  );
+
+  const ApprovalPanel = (
+    <window.ApprovalQueue
+      remaining={remaining}
+      pending={approval.pending}
+      approved={approval.approved}
+      log={approval.log}
+      onApprove={approval.approve}
+      onHold={hold}
+      isHolding={isHolding}
+      isComplete={isComplete}
+      total={approval.total}
+    />
+  );
+
+  const MiddlePanel = usesApproval ? ApprovalPanel : RadioPanel;
+
+  return (
+    <div className={`app ${showBar ? '' : 'app--bar-off'}`}
+         data-screen-label={`01 ${mode.toUpperCase()} · ARIA ${variation.toUpperCase()}`}>
+      {showBar && (
+        <window.AriaBar
+          messages={messages}
+          remaining={remaining}
+          isHolding={isHolding}
+          onClick={variation === 'v3' ? () => setV3Open(true) : undefined}
+        />
+      )}
+
+      <window.TopBar
+        remaining={remaining}
+        isHolding={isHolding}
+        isComplete={isComplete}
+        onHold={hold}
+        onResume={resume}
+        onReset={reset}
+        speed={speed}
+        onSpeedChange={setSpeed}
+        missionLabel={modeCfg.missionLabel}
+        onExit={onExit}
+      />
+
+      <main className={mainClass}>
+        <window.SubsystemGrid
+          telemetry={telemetry}
+          compact={compact}
+          systemConfig={modeCfg.systemConfig()}
+          systemOrder={modeCfg.systemOrder()}
+          highlightRole={role}
+          title={mode === 'fsae' ? 'VEHICLE SYSTEMS' : 'SUBSYSTEMS'}
+        />
+
+        {variation === 'v1' && (<>
+          {MiddlePanel}
+          <window.AriaV1
+            messages={messages}
+            telemetry={telemetry}
+            isHolding={isHolding}
+            remaining={remaining}
+            onSend={handleUserSend}
+          />
+        </>)}
+
+        {variation === 'v2' && (
+          <window.AriaV2
+            messages={messages}
+            telemetry={telemetry}
+            remaining={remaining}
+            isHolding={isHolding}
+            onSend={handleUserSend}
+            accent={tweaks.accent}
+          />
+        )}
+
+        {variation === 'v3' && (<>
+          {MiddlePanel}
+          <window.AriaV3Dock
+            messages={messages}
+            remaining={remaining}
+            onSummon={() => setV3Open(true)}
+          />
+          <window.AriaV3Overlay
+            open={v3Open}
+            onClose={() => setV3Open(false)}
+            messages={messages}
+            telemetry={telemetry}
+            remaining={remaining}
+            onSend={handleUserSend}
+          />
+        </>)}
+      </main>
+
+      {/* v2 — floating approval/checklist summary for autonomous only */}
+      {variation === 'v2' && usesApproval && approval.pending && !isComplete && (
+        <div style={{ position:'fixed', left:16, bottom:16, zIndex:150 }}>
+          <div style={{ width: 340, background: 'rgba(7,11,24,0.96)', border: `1px solid ${approval.pending.critical?'var(--red)':'var(--accent)'}`, borderRadius: 6, padding: 14, boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom: 8 }}>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize: 9, color: 'var(--grey)', letterSpacing: '0.15em' }}>
+                STEP {window.AUTONOMOUS_STEPS.findIndex(s => s.id === approval.pending.id) + 1}/{approval.total}
+              </span>
+              <span style={{ fontFamily:'var(--font-mono)', fontSize: 9, color: window.SYSTEM_COLORS[approval.pending.system], letterSpacing: '0.1em' }}>
+                {approval.pending.system.replace('_',' ')}
+              </span>
+            </div>
+            <div style={{ fontFamily:'var(--font-h)', fontSize: 18, letterSpacing:'0.06em', marginBottom: 6 }}>{approval.pending.action}</div>
+            <div style={{ fontSize: 11, color:'var(--grey)', lineHeight: 1.5, marginBottom: 10 }}>{approval.pending.prompt}</div>
+            <div style={{ display:'flex', gap: 6 }}>
+              <button className="btn btn--approve" style={{ flex: 1 }} onClick={() => approval.approve(approval.pending)} disabled={isHolding}>✓ AUTHORIZE</button>
+              <button className="btn btn--hold-big" onClick={hold}>⏸</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* v2 — floating mini-checklist for copilot/fsae */}
+      {variation === 'v2' && !usesApproval && !isComplete && (
+        <div style={{ position:'fixed', left:16, bottom:16, zIndex:150, width: 320, background: 'rgba(7,11,24,0.96)', border: '1px solid var(--border)', borderRadius: 6, padding: 14, boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', marginBottom: 10 }}>
+            <span style={{ fontFamily:'var(--font-h)', fontSize: 14, letterSpacing: '0.12em', color: 'var(--accent)' }}>NEXT UP</span>
+            <span style={{ fontFamily:'var(--font-mono)', fontSize: 9, color: 'var(--grey)', letterSpacing: '0.1em' }}>{checklist.done.size}/{checklistItems.length}</span>
+          </div>
+          {(() => {
+            const next = checklistItems.find(it => !checklist.done.has(it.id));
+            if (!next) return <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--green)' }}>ALL CHECKS COMPLETE</div>;
+            const armed = remaining <= next.triggerAt;
+            const own = roleFilter.includes(next.role) || next.role === 'ALL';
+            return (
+              <>
+                <div style={{ fontSize: 12, color: 'var(--white)', lineHeight: 1.5, marginBottom: 8 }}>{next.name}</div>
+                <div style={{ display:'flex', gap: 10, alignItems: 'center' }}>
+                  <span style={{ fontFamily:'var(--font-mono)', fontSize: 9, color: own ? role?.color : 'var(--grey)', letterSpacing: '0.1em' }}>{next.role}</span>
+                  <span style={{ fontFamily:'var(--font-mono)', fontSize: 9, color: 'var(--grey)' }}>{window.formatCountdown(next.triggerAt)}</span>
+                  <span style={{ fontFamily:'var(--font-mono)', fontSize: 9, color: armed ? 'var(--yellow)' : 'var(--grey)', opacity: armed ? 1 : 0.5 }}>{armed ? '● ARMED' : '○ PENDING'}</span>
+                  {armed && next.type === 'manual' && (
+                    <button className="rc-ack" style={{ marginLeft: 'auto' }} onClick={() => checklist.ack(next)}>ACK</button>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function App() {
+  const [tweaks, setTweaks] = useState(TWEAK_DEFAULTS);
+  const [tweaksOpen, setTweaksOpen] = useState(false);
+  const [editModeActive, setEditModeActive] = useState(false);
+  const [copilotStep, setCopilotStep] = useState(tweaks.mode === 'copilot' ? 'dashboard' : 'role');
+
+  const updateTweak = useCallback((k, v) => {
+    setTweaks(prev => {
+      const next = { ...prev, [k]: v };
+      window.parent.postMessage({ type: '__edit_mode_set_keys', edits: { [k]: v } }, '*');
+      return next;
+    });
+  }, []);
+
+  // ── Edit mode wiring ──
+  useEffect(() => {
+    const onMsg = (e) => {
+      const d = e.data || {};
+      if (d.type === '__activate_edit_mode') { setEditModeActive(true); setTweaksOpen(true); }
+      else if (d.type === '__deactivate_edit_mode') { setEditModeActive(false); setTweaksOpen(false); }
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const goToLanding = () => updateTweak('mode', 'landing');
+  const selectMode = (m) => {
+    if (m === 'copilot') {
+      setCopilotStep('role');
+      updateTweak('mode', 'copilot-pick');
+    } else {
+      updateTweak('mode', m);
+    }
+  };
+  const selectRole = (r) => {
+    updateTweak('copilotRole', r);
+    updateTweak('mode', 'copilot');
+    setCopilotStep('dashboard');
+  };
+
+  const mode = tweaks.mode;
+
+  let content;
+  if (mode === 'landing' || !mode) {
+    content = <window.LandingScreen onSelect={selectMode} />;
+  } else if (mode === 'copilot-pick') {
+    content = <window.RolePicker onSelect={selectRole} onBack={goToLanding} />;
+  } else if (MODES[mode]) {
+    content = <Dashboard mode={mode} tweaks={tweaks} setTweaks={setTweaks} onExit={goToLanding} />;
+  } else {
+    content = <window.LandingScreen onSelect={selectMode} />;
+  }
+
+  return (
+    <>
+      {content}
+      <Tweaks tweaks={tweaks} setTweaks={setTweaks} open={tweaksOpen} onClose={() => setTweaksOpen(false)} onBackToLanding={goToLanding} />
+      {!editModeActive && !tweaksOpen && MODES[mode] && (
+        <button className="tweaks-toggle" onClick={() => setTweaksOpen(true)}>⚙ TWEAKS</button>
+      )}
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
