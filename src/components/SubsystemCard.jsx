@@ -34,7 +34,7 @@ const STATUS_COLOR = {
   critical: 'var(--red)',
 }
 
-export default function SubsystemCard({ id, data }) {
+export default function SubsystemCard({ id, data, dimmed }) {
   const [expanded, setExpanded] = useState(false)
   const config = SUBSYSTEM_CONFIG[id]
   if (!config || !data) return null
@@ -48,7 +48,7 @@ export default function SubsystemCard({ id, data }) {
 
   return (
     <div
-      className={`subsystem-card ${status !== 'nominal' ? `card-${status}` : ''} ${expanded ? 'card-expanded' : ''}`}
+      className={`subsystem-card ${status !== 'nominal' ? `card-${status}` : ''} ${expanded ? 'card-expanded' : ''} ${dimmed ? 'card-dimmed' : ''}`}
       onClick={() => setExpanded(e => !e)}
       role="button"
       tabIndex={0}

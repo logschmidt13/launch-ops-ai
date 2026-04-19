@@ -68,3 +68,74 @@ code {
   border-radius: 3px;
   color: var(--orange);
 }
+
+/* ── Landing Screen ──────────────────────────────────────── */
+.landing {
+  position: fixed; inset: 0;
+  background: var(--black);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 56px; z-index: 100;
+}
+.landing-logo { text-align: center; }
+.landing-wordmark {
+  font-family: var(--font-header); font-size: 56px;
+  letter-spacing: 0.12em; color: var(--orange);
+  text-shadow: 0 0 60px rgba(255,77,0,0.45); line-height: 1;
+}
+.landing-tagline {
+  font-family: var(--font-mono); font-size: 11px;
+  color: var(--grey); letter-spacing: 0.22em; margin-top: 12px;
+}
+.mode-cards { display: flex; gap: 16px; padding: 0 24px; }
+.mode-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 24px 20px; width: 226px;
+  display: flex; flex-direction: column; gap: 10px;
+  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+}
+.mode-card:hover {
+  border-color: var(--orange); transform: translateY(-5px);
+  box-shadow: 0 16px 40px rgba(255,77,0,0.12);
+}
+.mode-card-num { font-family: var(--font-mono); font-size: 9px; color: var(--orange); letter-spacing: 0.2em; }
+.mode-card-title { font-family: var(--font-header); font-size: 21px; letter-spacing: 0.08em; color: var(--white); line-height: 1.1; }
+.mode-card-tag { font-family: var(--font-mono); font-size: 8px; color: var(--grey); letter-spacing: 0.1em; opacity: 0.6; }
+.mode-card-desc { font-size: 12px; color: var(--grey); line-height: 1.65; flex: 1; }
+.mode-card-btn {
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 0.12em; padding: 7px 18px;
+  border: 1px solid var(--orange); background: transparent;
+  color: var(--orange); border-radius: 3px; cursor: pointer;
+  transition: background 0.2s, color 0.2s; align-self: flex-start; margin-top: 6px;
+}
+.mode-card-btn:hover { background: var(--orange); color: #000; }
+.landing-footer { font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.1em; opacity: 0.35; }
+
+/* ── Role Picker ─────────────────────────────────────────── */
+.role-picker {
+  position: fixed; inset: 0; background: var(--black);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 40px; z-index: 100;
+}
+.role-picker-header { text-align: center; }
+.role-picker-title { font-family: var(--font-header); font-size: 30px; letter-spacing: 0.1em; color: var(--white); }
+.role-picker-sub { font-family: var(--font-mono); font-size: 10px; color: var(--grey); letter-spacing: 0.15em; margin-top: 8px; }
+.role-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; max-width: 780px; }
+.role-card {
+  background: var(--card); border: 1px solid transparent;
+  border-radius: 6px; padding: 18px 16px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 6px;
+  transition: border-color 0.2s, transform 0.2s, background 0.2s;
+}
+.role-card:hover { transform: translateY(-3px); background: #0f1628; }
+.role-callsign { font-family: var(--font-header); font-size: 19px; letter-spacing: 0.1em; }
+.role-label { font-family: var(--font-mono); font-size: 9px; color: var(--grey); letter-spacing: 0.08em; }
+.role-systems { font-size: 10px; color: var(--grey); opacity: 0.6; margin-top: 2px; text-transform: uppercase; }
+.role-picker-back {
+  font-family: var(--font-mono); font-size: 9px; color: var(--grey);
+  background: transparent; border: none; cursor: pointer;
+  letter-spacing: 0.1em; opacity: 0.55;
+}
+.role-picker-back:hover { opacity: 1; color: var(--white); }

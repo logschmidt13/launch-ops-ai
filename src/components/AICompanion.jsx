@@ -101,16 +101,20 @@ export default function AICompanion({ messages, telemetry, isHolding, remaining 
 
       <div className="ai-messages">
         {allMessages.map(msg => (
-          <div key={msg.id} className={`message ${TYPE_CLASSES[msg.type] ?? 'msg-info'}`}>
-            {msg.type !== 'user' && (
+          <div key={msg.id} className={`message ${TYPE_CLASSES[msg.type] ?? 'msg-info'} ${msg.type === 'radio' ? 'msg-radio' : ''}`}>
+            {msg.type === 'radio' ? (
               <div className="msg-sender">
-                <span className="aria-tag">ARIA</span>
+                <span className="radio-callsign" style={{ color: msg.roleColor }}>{msg.from}</span>
                 <span className="msg-time">{formatTime(msg.timestamp)}</span>
               </div>
-            )}
-            {msg.type === 'user' && (
+            ) : msg.type === 'user' ? (
               <div className="msg-sender msg-sender-user">
                 <span className="user-tag">YOU</span>
+                <span className="msg-time">{formatTime(msg.timestamp)}</span>
+              </div>
+            ) : (
+              <div className="msg-sender">
+                <span className="aria-tag">ARIA</span>
                 <span className="msg-time">{formatTime(msg.timestamp)}</span>
               </div>
             )}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { CHECKLIST_ITEMS, CHECKLIST_PHASES } from '../data/checklist'
+import { ROLES } from '../data/modes'
 
 function formatTrigger(seconds) {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0')
@@ -7,9 +8,11 @@ function formatTrigger(seconds) {
   return `T-${m}:${s}`
 }
 
-export default function Checklist({ remaining, isHolding }) {
+export default function Checklist({ remaining, isHolding, role }) {
   const [manualChecked, setManualChecked] = useState(new Set())
   const activeRef = useRef(null)
+  const checklistRoles = role && ROLES[role] ? ROLES[role].checklistRoles : null
+  const isMyItem = (item) => !checklistRoles || checklistRoles.includes(item.role) || item.role === 'ALL'
 
   const isChecked = (item) => {
     if (remaining <= item.triggerAt) {
@@ -79,11 +82,12 @@ export default function Checklist({ remaining, isHolding }) {
                 if (checked) { statusText = 'COMPLETE'; statusClass = 'status-complete' }
                 else if (actionReq) { statusText = 'ACTION REQUIRED'; statusClass = 'status-action' }
 
+                const dimmed = !isMyItem(item)
                 return (
                   <div
                     key={item.id}
                     ref={isActive ? activeRef : null}
-                    className={`checklist-item ${isActive ? 'item-active' : ''} ${checked ? 'item-checked' : ''} ${pending ? 'item-pending' : ''} ${actionReq ? 'item-action' : ''}`}
+                    className={`checklist-item ${isActive ? 'item-active' : ''} ${checked ? 'item-checked' : ''} ${pending ? 'item-pending' : ''} ${actionReq ? 'item-action' : ''} ${dimmed ? 'item-dimmed' : ''}`}
                     onClick={() => toggle(item)}
                     style={{ cursor: item.type === 'manual' && !checked ? 'pointer' : 'default' }}
                   >
