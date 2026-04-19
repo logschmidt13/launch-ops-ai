@@ -5,6 +5,7 @@ import Checklist from './components/Checklist'
 import AICompanion from './components/AICompanion'
 import LandingScreen from './components/LandingScreen'
 import RolePicker from './components/RolePicker'
+import FSAEDashboard from './components/FSAEDashboard'
 import { useCountdown } from './hooks/useCountdown'
 import { useTelemetry } from './hooks/useTelemetry'
 import { ARIA_TIMELINE } from './data/ariaMessages'
@@ -69,6 +70,7 @@ export default function App() {
 
   if (!mode) return <LandingScreen onSelect={setMode} />
   if (mode === 'copilot' && !role) return <RolePicker onSelect={setRole} onBack={() => setMode(null)} />
+  if (mode === 'fsae') return <FSAEDashboard onHome={goHome} theme={theme} onToggleTheme={toggleTheme} />
 
   return (
     <div className="app">

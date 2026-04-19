@@ -8,7 +8,7 @@ function formatCountdown(seconds) {
   return `T-${m}:${s}`
 }
 
-export default function TopBar({ remaining, isHolding, isComplete, onHold, onResume, theme, onToggleTheme, role, onHome }) {
+export default function TopBar({ remaining, isHolding, isComplete, onHold, onResume, theme, onToggleTheme, role, onHome, title = 'LAUNCH OPS AI', subtitle = 'APEX-7 · STUDENT LAUNCH INITIATIVE' }) {
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -23,8 +23,8 @@ export default function TopBar({ remaining, isHolding, isComplete, onHold, onRes
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <span className="wordmark">LAUNCH OPS AI</span>
-        <span className="mission-name">APEX-7 · STUDENT LAUNCH INITIATIVE</span>
+        <span className="wordmark">{title}</span>
+        <span className="mission-name">{subtitle}</span>
       </div>
 
       <div className="topbar-center">

@@ -8,7 +8,9 @@ function formatTrigger(seconds) {
   return `T-${m}:${s}`
 }
 
-export default function Checklist({ remaining, isHolding, role }) {
+export default function Checklist({ remaining, isHolding, role, items: itemsProp, phases: phasesProp, title = 'COUNTDOWN CHECKLIST' }) {
+  const items = itemsProp ?? CHECKLIST_ITEMS
+  const phases = phasesProp ?? CHECKLIST_PHASES
   const [manualChecked, setManualChecked] = useState(new Set())
   const activeRef = useRef(null)
   const checklistRoles = role && ROLES[role] ? ROLES[role].checklistRoles : null
@@ -29,9 +31,9 @@ export default function Checklist({ remaining, isHolding, role }) {
 
   // active = first action-required, or last auto-completed
   const activeItem = (() => {
-    const actionRequired = CHECKLIST_ITEMS.find(isActionRequired)
+    const actionRequired = items.find(isActionRequired)
     if (actionRequired) return actionRequired.id
-    const completed = [...CHECKLIST_ITEMS].reverse().find(item => !isPending(item) && isChecked(item))
+    const completed = [...items].reverse().find(item => !isPending(item) && isChecked(item))
     return completed ? completed.id : null
   })()
 
@@ -54,16 +56,16 @@ export default function Checklist({ remaining, isHolding, role }) {
   return (
     <section className="checklist-panel">
       <div className="panel-header">
-        <span className="panel-title">COUNTDOWN CHECKLIST</span>
+        <span className="panel-title">{title}</span>
         <span className="panel-subtitle">
-          {CHECKLIST_ITEMS.filter(isChecked).length} / {CHECKLIST_ITEMS.length} COMPLETE
+          {items.filter(isChecked).length} / {items.length} COMPLETE
         </span>
       </div>
 
       <div className="checklist-scroll">
-        {CHECKLIST_PHASES.map(phase => {
-          const items = CHECKLIST_ITEMS.filter(i => i.phase === phase)
-          const allDone = items.every(isChecked)
+        {phases.map(phase => {
+          const phaseItems = items.filter(i => i.phase === phase)
+          const allDone = phaseItems.every(isChecked)
           return (
             <div key={phase} className="checklist-phase">
               <div className={`phase-header ${allDone ? 'phase-done' : ''}`}>
@@ -71,7 +73,7 @@ export default function Checklist({ remaining, isHolding, role }) {
                 {allDone && <span className="phase-complete-badge">COMPLETE</span>}
               </div>
 
-              {items.map(item => {
+              {phaseItems.map(item => {
                 const checked = isChecked(item)
                 const pending = isPending(item)
                 const actionReq = isActionRequired(item)

@@ -34,9 +34,9 @@ const STATUS_COLOR = {
   critical: 'var(--red)',
 }
 
-export default function SubsystemCard({ id, data, dimmed }) {
+export default function SubsystemCard({ id, data, dimmed, config: configProp }) {
   const [expanded, setExpanded] = useState(false)
-  const config = SUBSYSTEM_CONFIG[id]
+  const config = configProp ?? SUBSYSTEM_CONFIG[id]
   if (!config || !data) return null
 
   const { status, metrics, history } = data
